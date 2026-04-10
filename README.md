@@ -1,7 +1,3 @@
-# COOKi OS
-
-Automated cooking robot OS — computer vision ingredient monitoring, Arduino motor control, YAML-driven recipes, and a live web control dashboard.
-
 ```
  ██████╗ ██████╗  ██████╗ ██╗  ██╗██╗     ██████╗ ███████╗
 ██╔════╝██╔═══██╗██╔═══██╗██║ ██╔╝██║    ██╔═══██╗██╔════╝
@@ -10,6 +6,8 @@ Automated cooking robot OS — computer vision ingredient monitoring, Arduino mo
 ╚██████╗╚██████╔╝╚██████╔╝██║  ██╗██║    ╚██████╔╝███████║
  ╚═════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═════╝ ╚══════╝
 ```
+
+Automated cooking robot OS — computer vision ingredient monitoring, Arduino motor control, YAML-driven recipes, and a live web control dashboard.
 
 > *COOKi grasps what every kitchen philosopher already knows: garlic turning golden is not a timer event. It is a photometric phenomenon. And anyone who tells you otherwise deserves overcooked pasta.*
 
