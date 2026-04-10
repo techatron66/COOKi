@@ -1,0 +1,27 @@
+.DS_Store
+Thumbs.db
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyd
+.python-version
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Editor and notebook state
+.vscode/
+.ipynb_checkpoints/
+
+# Logs and runtime artifacts
+*.log
+runs/

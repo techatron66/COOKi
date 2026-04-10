@@ -1,0 +1,23 @@
+# COOKi OS — Python dependencies
+# Install:  pip install -r requirements.txt --break-system-packages
+
+# Vision — regression backend
+torch>=2.0.0
+torchvision>=0.15.0
+pillow>=10.0
+
+# Vision — YOLO backend
+ultralytics>=8.0.0
+
+# Camera + trainer UI
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+
+# Arduino serial comms
+pyserial>=3.5
+
+# Recipe files
+pyyaml>=6.0
+
+# Web dashboard
+flask>=3.0.0
