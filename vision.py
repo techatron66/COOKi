@@ -13,8 +13,10 @@ load_vision_model(path, model_type) returns whichever backend is appropriate.
 """
 
 from pathlib import Path
+import time
 
 import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
@@ -120,20 +122,47 @@ def load_vision_model(model_path: str,
 # ── Camera ────────────────────────────────────────────────────────────────────
 
 class Camera:
-    def __init__(self, index: int = 0):
+    def __init__(self, index: int = 0, mock: bool = False):
+        self.mock = mock
+        self.cap = None
+        self._w = 640
+        self._h = 480
+
+        if self.mock:
+            print("[CAMERA] Mock mode — synthetic frames enabled")
+            return
+
         self.cap = cv2.VideoCapture(index)
         if not self.cap.isOpened():
             raise RuntimeError(
                 f"Camera index {index} not available. "
                 "Check connection or try a different index."
             )
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,  640)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self._w)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self._h)
         print(f"[CAMERA] Opened camera {index}  (640×480)")
 
+    def _mock_frame(self):
+        frame = np.zeros((self._h, self._w, 3), dtype="uint8")
+        t = time.time()
+        x = int((t * 120) % self._w)
+
+        # Animated marker keeps the pipeline live for UI and inference testing.
+        cv2.rectangle(frame, (max(0, x - 40), 190), (min(self._w, x + 40), 290),
+                      (30, 160, 255), -1)
+        cv2.putText(frame, "COOKi CAMERA MOCK", (155, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (220, 220, 220), 2)
+        cv2.putText(frame, time.strftime("%H:%M:%S"), (255, 430),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (180, 180, 180), 2)
+        return frame
+
     def read(self):
+        if self.mock:
+            return self._mock_frame()
+
         ret, frame = self.cap.read()
         return frame if ret else None
 
     def release(self):
-        self.cap.release()
+        if self.cap is not None:
+            self.cap.release()

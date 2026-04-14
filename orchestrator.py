@@ -26,7 +26,8 @@ class Orchestrator:
                  motor_port:  str  = "/dev/ttyUSB0",
                  mock:        bool = False,
                  headless:    bool = False,
-                 cam_index:   int  = 0):
+                 cam_index:   int  = 0,
+                 mock_camera: bool = False):
 
         with open(recipe_path) as f:
             recipe = yaml.safe_load(f)
@@ -34,7 +35,14 @@ class Orchestrator:
         self.recipe_name = recipe["recipe"]
         self.nodes       = [node_from_dict(n) for n in recipe["nodes"]]
         self.motor       = MotorController(port=motor_port, mock=mock)
-        self.camera      = Camera(index=cam_index)
+        try:
+            self.camera = Camera(index=cam_index, mock=mock_camera)
+        except RuntimeError:
+            if mock or mock_camera:
+                print("[CAMERA] Real camera unavailable — falling back to mock camera")
+                self.camera = Camera(mock=True)
+            else:
+                raise
         self.headless    = headless
 
         self._vision_cache: dict[str, object] = {}

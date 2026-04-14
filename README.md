@@ -11,6 +11,15 @@ Automated cooking robot OS — computer vision ingredient monitoring, Arduino mo
 
 > *COOKi grasps what every kitchen philosopher already knows: garlic turning golden is not a timer event. It is a photometric phenomenon. And anyone who tells you otherwise deserves overcooked pasta.*
 
+## A Sneak Peek into the Journey
+I have designed two iterations of COOKi, each incorporating structural refinements and 3D-printed hardware integrated with a commercial hotpot base. The first prototype featured an N20 motor with a single-arm configuration, which showed promise but had durability limitations. The second generation upgraded to a dual-arm harness design with an enhanced high-torque motor, delivering superior performance and reliability.
+**version_1**
+<video controls src="WhatsApp Video 2026-04-14 at 4.21.58 PM.mp4" title="COOKi_rev1"></video>
+<video controls src="WhatsApp Video 2026-04-14 at 4.21.58 PM (1).mp4" title="COOKi_rev1"></video>
+
+**version_2**
+
+
 ## Philosophy
 
 **The Core Idea**
@@ -245,8 +254,14 @@ python main.py recipes/pasta.yaml --mock
 # Headless — confirm only via web UI (no keyboard needed):
 python main.py recipes/pasta.yaml --headless
 
+# Mock camera — synthetic frames (no webcam required):
+python main.py recipes/pasta.yaml --mock-cam
+
 # Both (perfect for testing without hardware):
 python main.py recipes/pasta.yaml --mock --headless
+
+# Full no-hardware dev mode (no Arduino + no webcam):
+python main.py recipes/pasta.yaml --mock --mock-cam --headless
 
 # Custom camera or port:
 python main.py recipes/pasta.yaml --cam 1 --ui-port 8080

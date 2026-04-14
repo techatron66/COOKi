@@ -15,6 +15,9 @@ USAGE
 # Mock mode — no Arduino needed, motor commands printed:
   python main.py recipes/pasta.yaml --mock
 
+# Mock camera mode — synthetic frames (useful in dev containers):
+  python main.py recipes/pasta.yaml --mock-cam
+
 # Headless — operator confirms only via web UI, no keyboard prompts:
   python main.py recipes/pasta.yaml --headless
 
@@ -45,6 +48,8 @@ if __name__ == "__main__":
                     help="Arduino serial port (default: /dev/ttyUSB0)")
     ap.add_argument("--mock",      action="store_true",
                     help="No Arduino — motor commands printed only")
+    ap.add_argument("--mock-cam",  action="store_true",
+            help="No webcam needed — use synthetic camera frames")
     ap.add_argument("--headless",  action="store_true",
                     help="Confirm ingredients via UI only (no keyboard)")
     ap.add_argument("--cam",       type=int, default=0,
@@ -64,5 +69,6 @@ if __name__ == "__main__":
         mock=args.mock,
         headless=args.headless,
         cam_index=args.cam,
+        mock_camera=args.mock_cam,
     )
     cook.run()

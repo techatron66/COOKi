@@ -1,0 +1,40 @@
+recipe: one_pot_pasta
+
+nodes:
+
+  # ── 1. Heat the pan ─────────────────────────────────────────────────────────
+  - id: heat_pan
+    type: TIMED
+    prompt: "Place pan on medium heat and add a generous glug of olive oil."
+    duration_s: 90
+    motor:
+      speed: 0
+      direction: 0
+      stir_s: 90
+      rest_s: 0
+
+  # ── 2. Golden garlic (YOLO — train from phone photos) ────────────────────────
+  - id: garlic_golden
+    type: VISION
+    prompt: "Add thinly sliced garlic and a pinch of chilli flakes to the oil."
+    model: models/garlic_golden_yolo.pt
+    model_type: yolo
+    exit_threshold: 0.80       # exit when model says ≥80% cooked
+    frame_votes: 5             # 5 consecutive agreeing frames required
+    fallback_s: 240            # hard stop after 4 min if vision never fires
+    motor:
+      speed: 80
+      direction: 1
+      stir_s: 3                # stir 3s
+      rest_s: 9                # rest 9s (vision runs during rest)
+
+  
+  - id: rest
+    type: TIMED
+    prompt: "Turn off the heat."
+    duration_s: 120
+    motor:
+      speed: 0
+      direction: 0
+      stir_s: 120
+      rest_s: 0
