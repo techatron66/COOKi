@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>COOKi — Training Studio</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#0c0c0c; --bg1:#141414; --bg2:#1c1c1c; --bg3:#242424; --bg4:#2c2c2c;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --amber:#f59e0b; --amber-d:rgba(245,158,11,0.12); --amber-g:rgba(245,158,11,0.3);
+  --green:#4ade80; --green-d:rgba(74,222,128,0.1);
+  --red:#f87171; --red-d:rgba(248,113,113,0.1);
+  --blue:#60a5fa; --blue-d:rgba(96,165,250,0.1);
+  --purple:#a78bfa; --purple-d:rgba(167,139,250,0.1);
+  --text1:#e2e2e2; --text2:#888; --text3:#555;
+  --r:10px; --font:-apple-system,'Segoe UI',sans-serif;
+}
+body{background:var(--bg0);color:var(--text1);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* ── NAV ──────────────────────────────────────────────────────────────────── */
+nav{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 20px;
+  background:var(--bg1);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+}
+.nav-logo{font-size:18px;font-weight:800;letter-spacing:3px;color:var(--amber);flex-shrink:0}
+.nav-logo sub{font-size:9px;font-weight:400;letter-spacing:1px;color:var(--text3)}
+.nav-links{display:flex;gap:2px;margin-left:8px}
+.nav-link{
+  padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;
+  color:var(--text2);text-decoration:none;transition:all 0.15s;
+}
+.nav-link:hover{background:var(--bg2);color:var(--text1)}
+.nav-link.active{background:var(--amber-d);color:var(--amber)}
+.nav-spacer{flex:1}
+.nav-status{font-size:11px;color:var(--text3)}
+
+/* ── LAYOUT ──────────────────────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:0;min-height:calc(100vh - 45px)}
+@media(max-width:720px){.layout{grid-template-columns:1fr}}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────────────── */
+.sidebar{
+  background:var(--bg1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:45px;height:calc(100vh - 45px);overflow-y:auto;
+}
+.sidebar-hdr{
+  padding:14px 16px 10px;
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;justify-content:space-between;
+}
+.add-node-btn{
+  background:var(--amber);color:#000;border:none;border-radius:6px;
+  padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;
+  letter-spacing:0.5px;transition:opacity 0.15s;
+}
+.add-node-btn:hover{opacity:0.85}
+
+.node-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;cursor:pointer;border-left:2px solid transparent;
+  transition:all 0.15s;
+}
+.node-item:hover{background:var(--bg2)}
+.node-item.active{background:var(--bg2);border-left-color:var(--amber)}
+.node-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:var(--bg4);border:1px solid var(--border2);
+}
+.node-dot.trained{background:var(--green)}
+.node-dot.partial{background:var(--amber)}
+.node-info{flex:1;min-width:0}
+.node-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node-meta{font-size:10px;color:var(--text3);margin-top:1px}
+.node-del{
+  opacity:0;font-size:14px;color:var(--text3);cursor:pointer;
+  background:none;border:none;padding:2px 4px;border-radius:4px;
+  transition:all 0.15s;flex-shrink:0;
+}
+.node-item:hover .node-del{opacity:1}
+.node-del:hover{color:var(--red);background:var(--red-d)}
+
+.sidebar-empty{padding:20px 16px;font-size:12px;color:var(--text3);text-align:center;line-height:1.7}
+
+/* ── MAIN PANEL ──────────────────────────────────────────────────────────── */
+.main{padding:20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.empty-state{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;color:var(--text3);text-align:center;padding:40px;
+}
+.empty-icon{font-size:40px}
+.empty-title{font-size:16px;font-weight:500;color:var(--text2)}
+.empty-sub{font-size:13px;line-height:1.7}
+
+/* ── CARDS ───────────────────────────────────────────────────────────────── */
+.card{background:var(--bg1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ch{
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;gap:8px;
+}
+.ch-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;letter-spacing:1px}
+.badge-green{background:var(--green-d);color:var(--green)}
+.badge-amber{background:var(--amber-d);color:var(--amber)}
+.badge-blue{background:var(--blue-d);color:var(--blue)}
+.badge-gray{background:rgba(255,255,255,0.05);color:var(--text3)}
+.ch-spacer{flex:1}
+.cb{padding:16px}
+
+/* ── TABS ────────────────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.tab{
+  padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;
+  color:var(--text2);cursor:pointer;transition:all 0.15s;border:none;background:none;
+}
+.tab:hover{background:var(--bg2);color:var(--text1)}
+.tab.active{background:var(--amber-d);color:var(--amber)}
+.tab-pane{display:none;padding:16px}
+.tab-pane.active{display:block}
+
+/* ── NODE HEADER ─────────────────────────────────────────────────────────── */
+.node-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
+.node-hdr-name{font-size:22px;font-weight:700}
+.node-hdr-desc{font-size:13px;color:var(--text2);margin-top:2px}
+.model-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.mbadge{
+  font-size:10px;font-weight:600;letter-spacing:0.5px;
+  padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;
+}
+.mbadge-yes{background:var(--green-d);color:var(--green);border:1px solid rgba(74,222,128,0.2)}
+.mbadge-no{background:rgba(255,255,255,0.03);color:var(--text3);border:1px solid var(--border)}
+
+/* ── YOLO BINS ───────────────────────────────────────────────────────────── */
+.bins-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media(max-width:900px){.bins-grid{grid-template-columns:repeat(3,1fr)}}
+
+.bin-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  overflow:hidden;transition:border-color 0.2s;
+}
+.bin-card.drag-over{border-color:var(--amber);background:var(--amber-d)}
+.bin-header{
+  padding:8px 10px;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.bin-pct{font-size:14px;font-weight:800;color:var(--amber)}
+.bin-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.bin-count{font-size:10px;color:var(--text2)}
+
+.bin-drop{
+  min-height:80px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;padding:10px;cursor:pointer;
+  font-size:11px;color:var(--text3);text-align:center;
+  transition:all 0.15s;
+}
+.bin-drop:hover{color:var(--text2)}
+.bin-drop input[type=file]{display:none}
+.drop-icon{font-size:20px;margin-bottom:2px}
+
+.bin-thumbs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:2px;
+  padding:6px;max-height:160px;overflow-y:auto;
+}
+.thumb-wrap{
+  position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:3px;
+  background:var(--bg3);
+}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-del{
+  position:absolute;top:2px;right:2px;width:16px;height:16px;
+  background:rgba(0,0,0,0.7);border:none;border-radius:3px;
+  color:var(--red);font-size:10px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+}
+.thumb-wrap:hover .thumb-del{display:flex}
+
+/* ── CAMERA CAPTURE ──────────────────────────────────────────────────────── */
+.cam-section{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.cam-section{grid-template-columns:1fr}}
+
+.cam-feed-wrap{
+  position:relative;background:#000;border-radius:8px;overflow:hidden;
+  aspect-ratio:4/3;
+}
+.cam-feed-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.cam-label-overlay{
+  position:absolute;bottom:8px;left:8px;right:8px;pointer-events:none;
+}
+.cam-label-pct{font-size:28px;font-weight:800;color:var(--amber);text-shadow:0 0 12px var(--amber-g)}
+.cam-bar-bg{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:4px}
+.cam-bar-fill{height:100%;background:var(--amber);border-radius:2px;transition:width 0.2s}
+
+.cam-controls{display:flex;flex-direction:column;gap:12px}
+.label-slider-wrap{background:var(--bg2);border-radius:8px;padding:14px}
+.label-display{font-size:36px;font-weight:800;color:var(--amber);text-align:center;font-variant-numeric:tabular-nums;margin-bottom:8px}
+.label-slider{width:100%;accent-color:var(--amber);height:4px}
+.label-btns{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}
+.label-btn{
+  padding:6px 0;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--text2);font-size:11px;cursor:pointer;
+  text-align:center;transition:all 0.15s;
+}
+.label-btn:hover{background:var(--bg4);color:var(--text1)}
+.label-btn.active{background:var(--amber-d);border-color:var(--amber);color:var(--amber)}
+
+.cap-btn{
+  width:100%;padding:14px;border-radius:8px;border:none;
+  font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;
+}
+.cap-btn-capture{background:var(--amber);color:#000}
+.cap-btn-capture:hover{opacity:0.85}
+.cap-btn-capture:active{transform:scale(0.97)}
+.cap-btn-capture:disabled{opacity:0.3;cursor:default;transform:none}
+.cap-btn-start{background:var(--green-d);border:1px solid rgba(74,222,128,0.3);color:var(--green)}
+.cap-btn-start:hover{background:rgba(74,222,128,0.15)}
+.cap-btn-stop{background:var(--red-d);border:1px solid rgba(248,113,113,0.3);color:var(--red)}
+.cap-btn-stop:hover{background:rgba(248,113,113,0.15)}
+
+.cap-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cap-stat{background:var(--bg2);border-radius:6px;padding:10px;text-align:center}
+.cap-stat-val{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.cap-stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+
+.cap-log{
+  background:var(--bg2);border-radius:6px;padding:10px;
+  max-height:100px;overflow-y:auto;font-size:11px;color:var(--text2);
+  font-family:monospace;line-height:1.6;
+}
+
+/* ── TRAINING SECTION ────────────────────────────────────────────────────── */
+.train-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.train-grid{grid-template-columns:1fr}}
+
+.train-option{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:16px;display:flex;flex-direction:column;gap:10px;
+}
+.train-option-title{font-size:14px;font-weight:600}
+.train-option-desc{font-size:12px;color:var(--text2);line-height:1.6}
+.epoch-row{display:flex;align-items:center;gap:8px}
+.epoch-row label{font-size:11px;color:var(--text3);flex-shrink:0}
+.epoch-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text1);font-size:12px}
+.train-btn{
+  padding:10px;border-radius:7px;border:none;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;width:100%;
+}
+.train-btn-yolo{background:var(--blue-d);border:1px solid rgba(96,165,250,0.25);color:var(--blue)}
+.train-btn-yolo:hover{background:rgba(96,165,250,0.18)}
+.train-btn-reg{background:var(--purple-d);border:1px solid rgba(167,139,250,0.25);color:var(--purple)}
+.train-btn-reg:hover{background:rgba(167,139,250,0.18)}
+.train-btn:disabled{opacity:0.3;cursor:default}
+
+/* ── PROGRESS ────────────────────────────────────────────────────────────── */
+#train-progress-card{display:none}
+#train-progress-card.vis{display:block}
+.prog-bar-bg{height:6px;background:var(--bg3);border-radius:3px;margin:12px 0 8px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;background:var(--amber);box-shadow:0 0 8px var(--amber-g)}
+.prog-log{
+  background:var(--bg0);border-radius:6px;padding:12px;
+  height:200px;overflow-y:auto;font-size:11px;font-family:monospace;
+  color:var(--green);line-height:1.7;
+}
+.prog-log .err{color:var(--red)}
+
+/* ── MODAL ───────────────────────────────────────────────────────────────── */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  z-index:500;align-items:center;justify-content:center;
+}
+.modal-bg.vis{display:flex}
+.modal{
+  background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);
+  padding:24px;width:100%;max-width:420px;
+}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px}
+.form-row input,.form-row textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;color:var(--text1);font-size:13px;font-family:var(--font);
+}
+.form-row input:focus,.form-row textarea:focus{outline:none;border-color:var(--amber)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.btn-cancel{padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer}
+.btn-cancel:hover{background:var(--bg2)}
+.btn-ok{padding:8px 16px;border-radius:6px;border:none;background:var(--amber);color:#000;font-weight:700;cursor:pointer}
+.btn-ok:hover{opacity:0.85}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">COOKi<sub>OS</sub></div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Dashboard</a>
+    <a href="/train" class="nav-link active">Training Studio</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-status" id="nav-status"></div>
+</nav>
+
+<!-- ── LAYOUT ───────────────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- SIDEBAR: node list -->
+  <div class="sidebar">
+    <div class="sidebar-hdr">
+      Nodes
+      <button class="add-node-btn" onclick="openAddModal()">+ New</button>
+    </div>
+    <div id="node-list">
+      <div class="sidebar-empty">No nodes yet.<br>Click <b>+ New</b> to add one.</div>
+    </div>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main" id="main-panel">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🎓</div>
+      <div class="empty-title">Training Studio</div>
+      <div class="empty-sub">Select a node on the left to view its training<br>data and train a vision model.</div>
+    </div>
+
+    <!-- Node detail (hidden until node selected) -->
+    <div id="node-detail" style="display:none;flex-direction:column;gap:16px">
+
+      <!-- Node header -->
+      <div class="card">
+        <div class="cb">
+          <div class="node-hdr">
+            <div>
+              <div class="node-hdr-name" id="nd-title">—</div>
+              <div class="node-hdr-desc" id="nd-desc">—</div>
+            </div>
+          </div>
+          <div class="model-badges" id="nd-badges"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" onclick="showTab('yolo',this)">📸 YOLO  <span style="font-size:10px;color:var(--text3)" id="tab-yolo-count"></span></button>
+          <button class="tab"        onclick="showTab('camera',this)">🎥 Camera capture</button>
+          <button class="tab"        onclick="showTab('train',this)">⚡ Train</button>
+        </div>
+
+        <!-- YOLO tab -->
+        <div class="tab-pane active" id="tab-yolo">
+          <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+            Upload photos from your phone or Google Images into each percentage bucket.
+            Aim for <b>20–50 images per bucket</b>. Mix angles, lighting, and pan fill levels.
+          </p>
+          <div class="bins-grid" id="bins-grid"></div>
+        </div>
+
+        <!-- Camera tab -->
+        <div class="tab-pane" id="tab-camera">
+          <div class="cam-section">
+            <!-- Live feed -->
+            <div>
+              <div class="cam-feed-wrap">
+                <img id="cam-feed" src="/train/stream" alt="camera">
+                <div class="cam-label-overlay">
+                  <div class="cam-label-pct" id="cam-pct-overlay">0%</div>
+                  <div class="cam-bar-bg">
+                    <div class="cam-bar-fill" id="cam-bar" style="width:0%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="cap-log" id="cap-log" style="margin-top:8px">Ready. Start a session to begin capturing.</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="cam-controls">
+
+              <!-- Label slider -->
+              <div class="label-slider-wrap">
+                <div class="label-display" id="label-display">0%</div>
+                <input type="range" class="label-slider" id="label-slider"
+                       min="0" max="100" value="0" oninput="onLabelSlide(this.value)">
+                <div class="label-btns">
+                  <div class="label-btn" onclick="setLabel(0)">0%</div>
+                  <div class="label-btn" onclick="setLabel(25)">25%</div>
+                  <div class="label-btn" onclick="setLabel(50)">50%</div>
+                  <div class="label-btn" onclick="setLabel(75)">75%</div>
+                  <div class="label-btn" onclick="setLabel(100)">100%</div>
+                </div>
+              </div>
+
+              <!-- Stats -->
+              <div class="cap-stats">
+                <div class="cap-stat">
+                  <div class="cap-stat-val amber" id="cap-count">0</div>
+                  <div class="cap-stat-lbl">Frames</div>
+                </div>
+                <div class="cap-stat">
+                  <div class="cap-stat-val" id="cap-label-stat">—</div>
+                  <div class="cap-stat-lbl">Label</div>
+                </div>
+              </div>
+
+              <!-- Capture btn -->
+              <button class="cap-btn cap-btn-capture" id="cap-btn"
+                      onclick="captureFrame()" disabled>
+                📸 Capture Frame
+              </button>
+
+              <!-- Start / stop session -->
+              <div style="display:flex;gap:6px">
+                <button class="cap-btn cap-btn-start" style="flex:1;padding:10px"
+                        onclick="startSession()" id="start-session-btn">
+                  ▶ Start session
+                </button>
+                <button class="cap-btn cap-btn-stop" style="flex:1;padding:10px"
+                        onclick="stopSession()" id="stop-session-btn" disabled>
+                  ■ Stop
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Train tab -->
+        <div class="tab-pane" id="tab-train">
+          <div class="train-grid">
+
+            <div class="train-option">
+              <div class="train-option-title">⚡ YOLO  <span class="ch-badge badge-blue">Recommended</span></div>
+              <div class="train-option-desc">
+                Trains on the images you uploaded in the YOLO tab.
+                Fast, works on CPU, no cooking session needed.
+                Requires images in at least 2 buckets.
+              </div>
+              <div class="epoch-row">
+                <label>Epochs</label>
+                <input type="number" id="yolo-epochs" value="50" min="10" max="300">
+              </div>
+              <div id="yolo-req" style="font-size:11px;color:var(--text3)"></div>
+              <button class="train-btn train-btn-yolo" id="train-yolo-btn"
+                      onclick="startTrainYolo()">
+                Train YOLO model
+              </button>
+            </div>
+
+            <div class="train-option">
+              <div class="train-option-title">🎥 Regression  <span class="ch-badge badge-gray">Fine-grained</span></div>
+              <div class="train-option-desc">
+                Trains on frames captured with the Camera tab.
+                Learns your exact pan, lighting, and ingredient brand.
+                Requires a capture session first.
+              </div>
+              <div class="epoch-row">
+                <label>Epochs</label>
+                <input type="number" id="reg-epochs" value="30" min="10" max="200">
+              </div>
+              <div id="reg-req" style="font-size:11px;color:var(--text3)"></div>
+              <button class="train-btn train-btn-reg" id="train-reg-btn"
+                      onclick="startTrainReg()">
+                Train regression model
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Training progress -->
+          <div class="card" id="train-progress-card" style="margin-top:16px">
+            <div class="ch">
+              Training progress
+              <span class="ch-badge badge-amber" id="prog-method">—</span>
+              <div class="ch-spacer"></div>
+              <span id="prog-node" style="font-size:10px;color:var(--text3)"></span>
+            </div>
+            <div style="padding:12px 16px">
+              <div class="prog-bar-bg">
+                <div class="prog-bar-fill" id="prog-bar" style="width:0%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:10px">
+                <span id="prog-status">—</span>
+                <span id="prog-pct">0%</span>
+              </div>
+              <div class="prog-log" id="prog-log"></div>
+            </div>
+          </div>
+
+        </div><!-- /tab-train -->
+      </div><!-- /card -->
+
+    </div><!-- /node-detail -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ── ADD NODE MODAL ───────────────────────────────────────────────────────── -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Add new node</div>
+    <div class="form-row">
+      <label>Node ID <span style="color:var(--text3);font-weight:400">(snake_case, used in YAML)</span></label>
+      <input type="text" id="new-id" placeholder="e.g. onion_golden" oninput="autoLabel(this.value)">
+    </div>
+    <div class="form-row">
+      <label>Label <span style="color:var(--text3);font-weight:400">(human-readable name)</span></label>
+      <input type="text" id="new-label" placeholder="e.g. Onion golden">
+    </div>
+    <div class="form-row">
+      <label>Description <span style="color:var(--text3);font-weight:400">(optional)</span></label>
+      <input type="text" id="new-desc" placeholder="e.g. Onion turning golden brown in oil">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-ok" onclick="submitNode()">Add node</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentNode   = null;
+let nodes         = [];
+let captureActive = false;
+let capDebounce   = null;
+let trainESS      = null;
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadNodes();
+pollTrainStatus();
+setInterval(loadNodes, 8000);
+
+// ── Node list ─────────────────────────────────────────────────────────────────
+async function loadNodes() {
+  const res  = await fetch('/api/nodes');
+  nodes      = await res.json();
+  renderNodeList();
+  if (currentNode) {
+    const fresh = nodes.find(n => n.id === currentNode.id);
+    if (fresh) { currentNode = fresh; renderNodeHeader(); updateTrainReqs(); }
+  }
+}
+
+function renderNodeList() {
+  const el = ge('node-list');
+  if (!nodes.length) {
+    el.innerHTML = `<div class="sidebar-empty">No nodes yet.<br>Click <b>+ New</b> to add one.</div>`;
+    return;
+  }
+  el.innerHTML = nodes.map(n => {
+    const hasBoth = n.has_yolo_model && n.has_reg_model;
+    const hasOne  = n.has_yolo_model || n.has_reg_model;
+    const dotCls  = hasBoth ? 'trained' : hasOne ? 'partial' : '';
+    const imgs    = n.yolo_image_count;
+    const frms    = n.cam_frame_count;
+    const meta    = [imgs && `${imgs} imgs`, frms && `${frms} frames`].filter(Boolean).join(' · ') || 'No data yet';
+    return `
+      <div class="node-item ${currentNode && currentNode.id===n.id ? 'active' : ''}"
+           onclick="selectNode('${n.id}')">
+        <div class="node-dot ${dotCls}"></div>
+        <div class="node-info">
+          <div class="node-name">${esc(n.label || n.id)}</div>
+          <div class="node-meta">${esc(meta)}</div>
+        </div>
+        <button class="node-del" onclick="event.stopPropagation();deleteNode('${n.id}')" title="Remove node">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function selectNode(nodeId) {
+  currentNode = nodes.find(n => n.id === nodeId);
+  if (!currentNode) return;
+  renderNodeList();
+  ge('empty-state').style.display  = 'none';
+  ge('node-detail').style.display  = 'flex';
+  renderNodeHeader();
+  renderBins();
+  updateTrainReqs();
+  // Refresh bin thumbs
+  renderBins();
+}
+
+function renderNodeHeader() {
+  const n = currentNode;
+  ge('nd-title').textContent = n.label || n.id;
+  ge('nd-desc').textContent  = n.description || `Node ID: ${n.id}`;
+
+  const badges = [];
+  if (n.has_yolo_model) badges.push(`<span class="mbadge mbadge-yes">✓ YOLO model</span>`);
+  else                   badges.push(`<span class="mbadge mbadge-no">✕ YOLO model</span>`);
+  if (n.has_reg_model)   badges.push(`<span class="mbadge mbadge-yes">✓ Regression model</span>`);
+  else                   badges.push(`<span class="mbadge mbadge-no">✕ Regression model</span>`);
+  ge('nd-badges').innerHTML = badges.join('');
+
+  ge('tab-yolo-count').textContent = n.yolo_image_count
+    ? `(${n.yolo_image_count} imgs)` : '';
+}
+
+// ── YOLO bins ─────────────────────────────────────────────────────────────────
+const BINS = [
+  {key:'0_raw',    pct:'0%',   label:'Raw'},
+  {key:'25_light', pct:'25%',  label:'Light'},
+  {key:'50_half',  pct:'50%',  label:'Half'},
+  {key:'75_mostly',pct:'75%',  label:'Mostly'},
+  {key:'100_done', pct:'100%', label:'Done'},
+];
+
+function renderBins() {
+  if (!currentNode) return;
+  const n   = currentNode;
+  const grid = ge('bins-grid');
+  grid.innerHTML = BINS.map(b => {
+    const count = (n.yolo_bins && n.yolo_bins[b.key]) || 0;
+    return `
+      <div class="bin-card" id="bin-${b.key}"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="onDrop(event,'${b.key}')">
+        <div class="bin-header">
+          <div>
+            <div class="bin-pct">${b.pct}</div>
+            <div class="bin-label">${b.label}</div>
+          </div>
+          <div class="bin-count" id="bin-count-${b.key}">${count} imgs</div>
+        </div>
+        <label class="bin-drop">
+          <div class="drop-icon">+</div>
+          <div>Drop images or click</div>
+          <input type="file" multiple accept="image/*"
+                 onchange="uploadImages(this.files,'${b.key}')">
+        </label>
+        <div class="bin-thumbs" id="thumbs-${b.key}"></div>
+      </div>
+    `;
+  }).join('');
+
+  // Load thumbnails for each bin
+  BINS.forEach(b => loadThumbs(b.key));
+}
+
+async function loadThumbs(binKey) {
+  if (!currentNode) return;
+  const res   = await fetch(`/api/nodes/${currentNode.id}/yolo/images/${binKey}`);
+  const data  = await res.json();
+  const wrap  = ge(`thumbs-${binKey}`);
+  const count = ge(`bin-count-${binKey}`);
+  if (!wrap) return;
+  count.textContent = `${data.images.length} imgs`;
+  wrap.innerHTML = data.images.map(fname => `
+    <div class="thumb-wrap">
+      <img src="/api/nodes/${currentNode.id}/yolo/thumb/${binKey}/${encodeURIComponent(fname)}" loading="lazy">
+      <button class="thumb-del" onclick="delThumb('${binKey}','${fname}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function uploadImages(files, binKey) {
+  if (!files.length || !currentNode) return;
+  const fd = new FormData();
+  for (const f of files) fd.append('images', f);
+  const res = await fetch(`/api/nodes/${currentNode.id}/yolo/upload/${binKey}`,
+                          {method:'POST', body:fd});
+  const data = await res.json();
+  capLog(`Uploaded ${data.uploaded} image(s) to ${binKey}`);
+  await loadThumbs(binKey);
+  await loadNodes();
+  updateTrainReqs();
+}
+
+async function onDrop(event, binKey) {
+  event.preventDefault();
+  ge(`bin-${binKey}`).classList.remove('drag-over');
+  const files = [...event.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  await uploadImages(files, binKey);
+}
+
+async function delThumb(binKey, fname) {
+  if (!currentNode) return;
+  await fetch(`/api/nodes/${currentNode.id}/yolo/${binKey}/${encodeURIComponent(fname)}`,
+              {method:'DELETE'});
+  await loadThumbs(binKey);
+  await loadNodes();
+  updateTrainReqs();
+}
+
+// ── Camera capture ────────────────────────────────────────────────────────────
+let currentLabel = 0;
+let capCount     = 0;
+
+function onLabelSlide(v) {
+  currentLabel = parseInt(v);
+  updateLabelUI();
+  if (captureActive) {
+    clearTimeout(capDebounce);
+    capDebounce = setTimeout(() => api('/api/capture/label',{label:currentLabel}), 80);
+  }
+}
+
+function setLabel(v) {
+  currentLabel = v;
+  ge('label-slider').value = v;
+  updateLabelUI();
+  if (captureActive) api('/api/capture/label', {label: currentLabel});
+}
+
+function updateLabelUI() {
+  ge('label-display').textContent      = currentLabel + '%';
+  ge('cam-pct-overlay').textContent    = currentLabel + '%';
+  ge('cam-bar').style.width            = currentLabel + '%';
+  ge('cap-label-stat').textContent     = currentLabel + '%';
+  // Highlight quick label buttons
+  document.querySelectorAll('.label-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.textContent) === currentLabel);
+  });
+}
+
+async function startSession() {
+  if (!currentNode) return;
+  const res  = await api('/api/capture/start', {node_id: currentNode.id});
+  const data = await res.json();
+  if (!data.ok) { capLog('Error: ' + data.error); return; }
+  captureActive = true;
+  capCount      = data.existing_frames || 0;
+  ge('cap-btn').disabled              = false;
+  ge('start-session-btn').disabled    = true;
+  ge('stop-session-btn').disabled     = false;
+  ge('cap-count').textContent         = capCount;
+  capLog(`Session started. ${capCount} existing frames. Slide label, then CAPTURE.`);
+}
+
+async function stopSession() {
+  const res  = await api('/api/capture/stop');
+  const data = await res.json();
+  captureActive = false;
+  ge('cap-btn').disabled              = true;
+  ge('start-session-btn').disabled    = false;
+  ge('stop-session-btn').disabled     = true;
+  capLog(`Session stopped. ${data.total_frames} frames saved.`);
+  await loadNodes();
+  updateTrainReqs();
+}
+
+async function captureFrame() {
+  if (!captureActive || !currentNode) return;
+  // Grab a frame from the camera stream via canvas
+  const img    = ge('cam-feed');
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth  || 640;
+  canvas.height= img.naturalHeight || 480;
+  const ctx    = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async blob => {
+    const res  = await fetch(`/api/capture/frame?node_id=${currentNode.id}`, {
+      method:'POST', body:blob, headers:{'Content-Type':'image/jpeg'}
+    });
+    const data = await res.json();
+    if (data.ok) {
+      capCount = data.total;
+      ge('cap-count').textContent = capCount;
+      capLog(`✓ frame_${String(data.total-1).padStart(4,'0')}.jpg  label=${data.label}%`);
+      // Flash the button
+      ge('cap-btn').textContent = '✓ Captured!';
+      setTimeout(() => ge('cap-btn').textContent = '📸 Capture Frame', 400);
+    }
+  }, 'image/jpeg', 0.85);
+}
+
+// Space bar captures
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && captureActive &&
+      document.getElementById('tab-camera').classList.contains('active')) {
+    e.preventDefault();
+    captureFrame();
+  }
+});
+
+function capLog(msg) {
+  const el = ge('cap-log');
+  el.innerHTML += `<div>${esc(msg)}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Training ──────────────────────────────────────────────────────────────────
+function updateTrainReqs() {
+  const n = currentNode;
+  if (!n) return;
+
+  const yoloBins = Object.values(n.yolo_bins || {}).filter(c => c > 0).length;
+  const yoloOk   = yoloBins >= 2;
+  ge('yolo-req').textContent  = yoloOk
+    ? `✓ ${n.yolo_image_count} images across ${yoloBins} bins`
+    : `⚠ Need images in at least 2 bins (have ${yoloBins})`;
+  ge('yolo-req').style.color  = yoloOk ? 'var(--green)' : 'var(--amber)';
+
+  const framesOk = n.cam_frame_count >= 5;
+  ge('reg-req').textContent   = framesOk
+    ? `✓ ${n.cam_frame_count} camera frames`
+    : `⚠ Need ≥5 frames (have ${n.cam_frame_count})`;
+  ge('reg-req').style.color   = framesOk ? 'var(--green)' : 'var(--amber)';
+}
+
+async function startTrainYolo() {
+  if (!currentNode) return;
+  const epochs = parseInt(ge('yolo-epochs').value) || 50;
+  const res    = await api(`/api/train/yolo/${currentNode.id}`, {epochs});
+  const data   = await res.json();
+  if (!data.ok) { alert(data.error); return; }
+  showProgressCard('YOLO', currentNode.id);
+  listenTrainEvents();
+}
+
+async function startTrainReg() {
+  if (!currentNode) return;
+  const epochs = parseInt(ge('reg-epochs').value) || 30;
+  const res    = await api(`/api/train/regression/${currentNode.id}`, {epochs});
+  const data   = await res.json();
+  if (!data.ok) { alert(data.error); return; }
+  showProgressCard('Regression', currentNode.id);
+  listenTrainEvents();
+}
+
+function showProgressCard(method, nodeId) {
+  const card = ge('train-progress-card');
+  card.classList.add('vis');
+  ge('prog-method').textContent = method;
+  ge('prog-node').textContent   = nodeId;
+  ge('prog-bar').style.width    = '0%';
+  ge('prog-pct').textContent    = '0%';
+  ge('prog-status').textContent = 'Starting…';
+  ge('prog-log').innerHTML      = '';
+  ge('train-yolo-btn').disabled = true;
+  ge('train-reg-btn').disabled  = true;
+}
+
+function listenTrainEvents() {
+  if (trainESS) trainESS.close();
+  trainESS = new EventSource('/api/train/events');
+  trainESS.onmessage = e => {
+    const d   = JSON.parse(e.data);
+    const log = ge('prog-log');
+
+    if (d.type === 'log') {
+      const div = document.createElement('div');
+      div.textContent = d.line;
+      if (d.line.includes('[ERROR]')) div.className = 'err';
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+      ge('prog-bar').style.width = d.progress + '%';
+      ge('prog-pct').textContent = d.progress + '%';
+      ge('prog-status').textContent = 'Training…';
+    }
+
+    if (d.type === 'done') {
+      ge('prog-bar').style.width    = d.success ? '100%' : ge('prog-bar').style.width;
+      ge('prog-pct').textContent    = d.success ? '100%' : ge('prog-pct').textContent;
+      ge('prog-status').textContent = d.success ? '✓ Complete' : '✕ Failed: ' + d.error;
+      ge('prog-status').style.color = d.success ? 'var(--green)' : 'var(--red)';
+      ge('train-yolo-btn').disabled = false;
+      ge('train-reg-btn').disabled  = false;
+      trainESS.close();
+      trainESS = null;
+      if (d.success) loadNodes();
+    }
+  };
+}
+
+async function pollTrainStatus() {
+  // On page load, restore in-progress training if any
+  const res  = await fetch('/api/train/status');
+  const data = await res.json();
+  if (data.running || (data.done && data.log.length)) {
+    showProgressCard(data.method, data.node_id);
+    ge('prog-log').innerHTML = data.log.map(l =>
+      `<div class="${l.includes('[ERROR]')?'err':''}">${esc(l)}</div>`
+    ).join('');
+    ge('prog-log').scrollTop = ge('prog-log').scrollHeight;
+    ge('prog-bar').style.width = data.progress + '%';
+    ge('prog-pct').textContent = data.progress + '%';
+    if (data.running) {
+      ge('prog-status').textContent = 'Training in progress…';
+      listenTrainEvents();
+    } else if (data.done) {
+      ge('prog-status').textContent = data.success ? '✓ Complete' : '✕ Failed';
+      ge('prog-status').style.color = data.success ? 'var(--green)' : 'var(--red)';
+    }
+  }
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  ge('tab-' + name).classList.add('active');
+}
+
+// ── Node CRUD ─────────────────────────────────────────────────────────────────
+function openAddModal() { ge('add-modal').classList.add('vis'); ge('new-id').focus(); }
+function closeModal()   { ge('add-modal').classList.remove('vis'); }
+
+function autoLabel(id) {
+  const lbl = ge('new-label');
+  if (!lbl.dataset.touched)
+    lbl.value = id.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Escape') closeModal();
+  if (e.code === 'Enter' && ge('add-modal').classList.contains('vis')) submitNode();
+});
+
+async function submitNode() {
+  const id    = ge('new-id').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const label = ge('new-label').value.trim();
+  const desc  = ge('new-desc').value.trim();
+  if (!id || !label) { alert('ID and label are required'); return; }
+  const res  = await api('/api/nodes', {id, label, description: desc});
+  const data = await res.json();
+  if (!data.ok) { alert(data.error); return; }
+  closeModal();
+  ge('new-id').value = ge('new-label').value = ge('new-desc').value = '';
+  await loadNodes();
+  selectNode(data.node_id);
+}
+
+async function deleteNode(nodeId) {
+  if (!confirm(`Remove node "${nodeId}"?\n\nThis removes it from the registry but does NOT delete trained models or images.`)) return;
+  await fetch(`/api/nodes/${nodeId}`, {method:'DELETE'});
+  if (currentNode && currentNode.id === nodeId) {
+    currentNode = null;
+    ge('empty-state').style.display  = '';
+    ge('node-detail').style.display  = 'none';
+  }
+  await loadNodes();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const ge  = id => document.getElementById(id);
+const esc = s  => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+async function api(url, body) {
+  return fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+// Mark label field as touched so autofill stops
+ge('new-label').addEventListener('input', () => ge('new-label').dataset.touched = '1');
+</script>
+</body>
+</html>

@@ -35,86 +35,12 @@ from flask import (Flask, Response, render_template,
 import io
 
 from state import state
-
-TRAINING_ENABLED = True
-try:
-    from training_manager import (
-        list_nodes, add_node, delete_node,
-        save_yolo_image, delete_yolo_image, list_yolo_images, get_yolo_thumb,
-        camera_capture, training_job,
-        YOLO_BINS,
-    )
-except ImportError:
-    # Keep cooking dashboard operational even when optional training module
-    # is not present in lightweight deployments.
-    TRAINING_ENABLED = False
-    YOLO_BINS = []
-
-    def _training_missing(*_args, **_kwargs):
-        raise RuntimeError("Training features are unavailable: training_manager module not found")
-
-    def list_nodes():
-        return []
-
-    def add_node(*_args, **_kwargs):
-        return {"ok": False, "error": "Training features are unavailable"}
-
-    def delete_node(*_args, **_kwargs):
-        return {"ok": False, "error": "Training features are unavailable"}
-
-    save_yolo_image = _training_missing
-    delete_yolo_image = _training_missing
-
-    def list_yolo_images(*_args, **_kwargs):
-        return []
-
-    def get_yolo_thumb(*_args, **_kwargs):
-        return None
-
-    class _CameraCaptureDisabled:
-        node_id = ""
-
-        @staticmethod
-        def start(*_args, **_kwargs):
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def stop():
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def set_label(*_args, **_kwargs):
-            return None
-
-        @staticmethod
-        def save_frame(*_args, **_kwargs):
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def status():
-            return {"ok": False, "error": "Training features are unavailable"}
-
-    class _TrainingJobDisabled:
-        @staticmethod
-        def start_yolo(*_args, **_kwargs):
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def start_regression(*_args, **_kwargs):
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def status():
-            return {"ok": False, "error": "Training features are unavailable"}
-
-        @staticmethod
-        def log_events():
-            while True:
-                yield 'data: {"ok": false, "error": "Training features are unavailable"}\n\n'
-                time.sleep(2)
-
-    camera_capture = _CameraCaptureDisabled()
-    training_job = _TrainingJobDisabled()
+from training_manager import (
+    list_nodes, add_node, delete_node,
+    save_yolo_image, delete_yolo_image, list_yolo_images, get_yolo_thumb,
+    camera_capture, training_job,
+    YOLO_BINS,
+)
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
